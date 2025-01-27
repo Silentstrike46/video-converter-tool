@@ -8,3 +8,4 @@ TODO can we keep this instruction here for the repo, but include binaries in the
 
 TODO add doc here for git lfs
 TODO add doc here for python version and black formatting.
+TODO add black and flake8 and settings
