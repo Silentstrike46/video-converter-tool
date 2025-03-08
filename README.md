@@ -86,3 +86,5 @@ pyside6-designer
 ```
 
 TODO add option where we can select a local install of FFmpeg and use that instead of the system one?
+
+TODO do we need to ignore ui files?

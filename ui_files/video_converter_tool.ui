@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>500</width>
+    <height>380</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>500</width>
+    <height>149</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>500</width>
+    <height>380</height>
+   </size>
+  </property>
+  <property name="baseSize">
+   <size>
+    <width>500</width>
+    <height>380</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Video Converter Tool</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QTabWidget" name="commandTabWidget">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>491</width>
+      <height>361</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="convert_file_tab">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Convert File&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <attribute name="title">
+      <string>Convert File</string>
+     </attribute>
+     <widget class="QWidget" name="gridLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>10</y>
+        <width>483</width>
+        <height>311</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <property name="sizeConstraint">
+        <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
+       </property>
+       <property name="leftMargin">
+        <number>10</number>
+       </property>
+       <property name="topMargin">
+        <number>10</number>
+       </property>
+       <property name="rightMargin">
+        <number>10</number>
+       </property>
+       <property name="bottomMargin">
+        <number>10</number>
+       </property>
+       <property name="horizontalSpacing">
+        <number>20</number>
+       </property>
+       <property name="verticalSpacing">
+        <number>30</number>
+       </property>
+       <item row="2" column="2">
+        <widget class="QPushButton" name="selectOutputDirectory">
+         <property name="text">
+          <string>Select Directory</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPlainTextEdit" name="inputFileEdit">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="verticalScrollBarPolicy">
+          <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QPushButton" name="pushButton">
+         <property name="text">
+          <string>Select File</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Output Directory</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>Output File</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QPlainTextEdit" name="outputDirectoryEdit">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="verticalScrollBarPolicy">
+          <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="2">
+        <widget class="QComboBox" name="fileExtensionComboBox">
+         <property name="currentText">
+          <string/>
+         </property>
+         <property name="placeholderText">
+          <string>.mp4</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QPushButton" name="convertButton">
+         <property name="text">
+          <string>Convert</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QPlainTextEdit" name="filenameEdit">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="verticalScrollBarPolicy">
+          <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QLabel" name="processingLabel">
+         <property name="text">
+          <string>Processing...</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Input File</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="images_to_video_tab">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Images To Video&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <attribute name="title">
+      <string>Images To Video</string>
+     </attribute>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
