@@ -4,7 +4,11 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12.8"
-dependencies = ["ffmpeg-python>=0.2.0", "moviepy>=2.1.2"]
+dependencies = [
+    "easygui>=0.98.3",
+    "ffmpeg-python>=0.2.0",
+ "moviepy>=2.1.2",
+]
 
 [dependency-groups]
 dev = ["bandit>=1.8.3", "black>=25.1.0", "flake8>=7.1.2"]
