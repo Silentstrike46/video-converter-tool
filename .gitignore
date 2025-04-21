@@ -175,3 +175,4 @@ cython_debug/
 ffmpeg
 ffprobe
 assets
+output

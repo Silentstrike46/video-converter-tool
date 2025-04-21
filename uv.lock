@@ -493,6 +493,7 @@ dependencies = [
     { name = "easygui" },
     { name = "ffmpeg-python" },
     { name = "moviepy" },
+    { name = "pyside6" },
 ]
 
 [package.dev-dependencies]
@@ -510,6 +511,7 @@ requires-dist = [
     { name = "easygui", specifier = ">=0.98.3" },
     { name = "ffmpeg-python", specifier = ">=0.2.0" },
     { name = "moviepy", specifier = ">=2.1.2" },
+    { name = "pyside6", specifier = ">=6.9.0" },
 ]
 
 [package.metadata.requires-dev]

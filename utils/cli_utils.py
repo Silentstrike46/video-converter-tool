@@ -110,6 +110,8 @@ def read_cli_input_with_validation(
         # Check if the user wants to exit
         if value.lower().strip() in config.QUIT_SIGNALS:
             raise exceptions.CLIQuitSignal("User requested to quit.")
+        if value.lower().strip() in config.MAIN_MENU_SIGNALS:
+            raise exceptions.CLIMainMenuSignal("User requested to return to main menu.")
         # Check for valid input
         if value in valid_values:
             return value
@@ -141,9 +143,6 @@ def get_cli_file_path(
         str: The file path provided by the user, if multiple is False.
         list[str]: A list of file paths provided by the user, if multiple is True.
         None: If the user cancels the file selection.
-
-    Raises:
-        CLIQuitSignal: If the user cancels the file selection.
     """
     # File select should return valid file, or None if GUI was closed
     file_path = easygui.fileopenbox(
@@ -172,9 +171,6 @@ def get_cli_directory_path(
     Returns:
         str: The directory path provided by the user.
         None: If the user cancels the directory selection.
-
-    Raises:
-        CLIQuitSignal: If the user cancels the directory selection.
     """
     # Directory select should return valid dir, or None if GUI was closed
     dir_path = easygui.diropenbox(msg=prompt, title=title, default=default)
