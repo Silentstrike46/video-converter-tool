@@ -1,0 +1,17 @@
+[project]
+name = "video-converter-tool"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13.6"
+dependencies = [
+    "easygui>=0.98.3",
+    "ffmpeg-python>=0.2.0",
+    "moviepy>=2.1.2",
+    "pyqt6>=6.9.1",
+    "pyside6>=6.9.0",
+]
+
+[dependency-groups]
+dev = ["bandit>=1.8.3", "black>=25.1.0", "flake8>=7.1.2"]
+pyside = ["pyside6>=6.9.0"]

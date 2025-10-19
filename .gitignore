@@ -172,3 +172,7 @@ cython_debug/
 
 
 # Project-specific
+ffmpeg
+ffprobe
+assets
+output
