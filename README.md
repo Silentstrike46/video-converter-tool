@@ -88,3 +88,5 @@ pyside6-designer
 TODO add option where we can select a local install of FFmpeg and use that instead of the system one?
 
 TODO do we need to ignore ui files?
+
+TODO issue with running inside uv on older python versions: <https://github.com/astral-sh/python-build-standalone/issues/146>

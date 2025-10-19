@@ -51,7 +51,7 @@ def __menu_main() -> MenuState:
     print("Please select an option:")
     print("1. File Converter")
     print("2. File Merger")
-    print("[q/quit]. Exit")
+    print("\n[q/quit]. Exit\n")
 
     choice = read_cli_input_with_validation(
         prompt="Enter your choice: ",
@@ -104,9 +104,10 @@ def __menu_file_converter() -> MenuState:
             input_file_name = os.path.basename(input_file_path)
             output_file_name = os.path.splitext(input_file_name)[0] + "." + file_type
             output_file_path = os.path.join(output_directory, output_file_name)
-            print(f"4. Convert File to: {output_file_path}")
-        print("[q/quit]. Exit")
-        print("[m/main]. Return to main menu")
+            print()
+            print(f"4. RUN CONVERSION: Convert File to: {output_file_path}")
+        print("\n[q/quit]. Exit")
+        print("[m/main]. Return to main menu\n")
 
         choice = read_cli_input_with_validation(
             prompt="Enter your choice: ",
@@ -185,12 +186,24 @@ def __menu_file_converter_file_type() -> str:
     Returns:
         str: The file type provided by the user.
     """
-    file_type = read_cli_input_with_validation(
-        prompt="Select file type (mp4, mov, avi, mkv): ",
-        valid_values=["mp4", "mov", "avi", "mkv"],
+    print("\nAvailable output file types:")
+    mapping = {
+        "1": "mp4",
+        "2": "mov",
+        "3": "avi",
+        "4": "mkv",
+    }
+    for key, value in mapping.items():
+        print(f"{key}. {value}")
+    print()
+
+    file_type_int = read_cli_input_with_validation(
+        prompt="Select output file type: ",
+        valid_values=list(mapping.keys()),
         error_message="Unsupported file type. Please try again.",
     )
-    # if file type starts with ., strip it
+    file_type = mapping[file_type_int]
+    # if file type starts with ., strip it (failsafe)
     if file_type and file_type.startswith("."):
         file_type = file_type[1:]
     return file_type
