@@ -6,20 +6,16 @@ Alternative option to the GUI implementation.
 # Python imports
 import os
 import sys
-import time
 from enum import Enum
 
 # Local imports
-from utils.exceptions import CLIMainMenuSignal, CLIQuitSignal
 from utils.cli_utils import (
     read_cli_input,
     read_cli_input_with_default,
     read_cli_input_with_validation,
     get_cli_file_path,
-    get_cli_directory_path,
 )
-from utils import ffmpeg_wrapper
-from utils import config
+from utils import ffmpeg_wrapper, config, cli_utils, file_merger, exceptions
 
 
 # Config variables
@@ -94,13 +90,20 @@ def __menu_file_converter() -> MenuState:
     output_file_path: str = ""
     # TODO Clear screen between each menu
     while True:
-        print("\n")
-        print("File Converter Menu")
+        print("\nFile Converter Menu")
         print(f"1. Select Input File: {input_file_path}")
         print(f"2. Select Output Directory: {output_directory}")
         print(f"3. Select File Type: {file_type}")
 
-        if input_file_path and output_directory and file_type:
+        conversion_ready = all(
+            [
+                input_file_path,
+                output_directory,
+                file_type,
+            ]
+        )
+
+        if conversion_ready:
             input_file_name = os.path.basename(input_file_path)
             output_file_name = os.path.splitext(input_file_name)[0] + "." + file_type
             output_file_path = os.path.join(output_directory, output_file_name)
@@ -122,6 +125,10 @@ def __menu_file_converter() -> MenuState:
             case "3":  # Select file type
                 file_type = __menu_file_converter_file_type()
             case "4":  # Convert file
+                if not conversion_ready:
+                    # Failsafe as option does not display but is valid.
+                    print("Please fill in all fields before converting.")
+                    continue
                 __menu_file_converter_convert_file(
                     input_file_path=input_file_path,
                     output_file_path=output_file_path,
@@ -131,7 +138,7 @@ def __menu_file_converter() -> MenuState:
                 return MenuState.MAIN
             case "q" | "quit":  # Failsafe: should be handled by exception
                 print("<Warning: Hit unreachable failsafe>")
-                raise CLIQuitSignal("User requested to quit.")
+                raise exceptions.CLIQuitSignal("User requested to quit.")
             case _:
                 # Failsafe: Validator should prevent this scenario
                 print(f"Invalid choice: {choice}. Please try again.")
@@ -167,17 +174,11 @@ def __menu_file_converter_output_directory() -> str:
     Returns:
         str: The output directory path provided by the user.
     """
-    result = get_cli_directory_path(
-        prompt="Select output directory",
+    return cli_utils.get_directory(
         title="Select Output Directory",
+        prompt="Select output directory",
         default="*",
     )
-    if not result:
-        print("No directory selected.")
-        output_directory = ""
-    else:
-        output_directory = result
-    return output_directory
 
 
 def __menu_file_converter_file_type() -> str:
@@ -186,27 +187,7 @@ def __menu_file_converter_file_type() -> str:
     Returns:
         str: The file type provided by the user.
     """
-    print("\nAvailable output file types:")
-    mapping = {
-        "1": "mp4",
-        "2": "mov",
-        "3": "avi",
-        "4": "mkv",
-    }
-    for key, value in mapping.items():
-        print(f"{key}. {value}")
-    print()
-
-    file_type_int = read_cli_input_with_validation(
-        prompt="Select output file type: ",
-        valid_values=list(mapping.keys()),
-        error_message="Unsupported file type. Please try again.",
-    )
-    file_type = mapping[file_type_int]
-    # if file type starts with ., strip it (failsafe)
-    if file_type and file_type.startswith("."):
-        file_type = file_type[1:]
-    return file_type
+    return cli_utils.get_video_output_file_type()
 
 
 def __menu_file_converter_convert_file(input_file_path: str, output_file_path: str):
@@ -236,10 +217,16 @@ def __menu_file_converter_convert_file(input_file_path: str, output_file_path: s
             print("Overwriting existing file.")
     # Call converter
     print(f"Converting {input_file_path} to {output_file_path}...")
-    ffmpeg_wrapper.convert_file(
-        input_filepath=input_file_path,
-        output_filepath=output_file_path,
-    )
+    try:
+        ffmpeg_wrapper.convert_file(
+            input_filepath=input_file_path,
+            output_filepath=output_file_path,
+        )
+    except ffmpeg_wrapper.ffmpeg.Error:
+        # Error would have already been logged to terminal by ffmpeg
+        print("An error occurred during file conversion")
+        print("File conversion failed. Please fix the issue and try again.")
+        return
     print(f"File conversion completed. See {output_file_path} for results.")
 
 
@@ -249,16 +236,249 @@ def __menu_file_converter_convert_file(input_file_path: str, output_file_path: s
 def __menu_file_merger() -> MenuState:
     """Logic for the file merger menu.
 
-    # TODO explain more
+    Allows the user to select a directory of input image files, an
+    output directory, and desired output file name and type for
+    the merged video file, as well as frame rate, and condenses
+    the images into a video file.
 
     Returns:
         MenuState: The next menu state to transition to.
     """
-    print("File Merger Menu")
-    # TODO continue here
-    print("\n\nUNIMPLEMENTED!\n\n")
+    input_directory_path: str = ""
+    output_directory_path: str = ""
+    output_file_name: str = "output_video"
+    output_file_type: str = "mp4"
+    default_frame_rate = config.DEFAULT_MERGING_OUTPUT_FRAME_RATE
+    frame_rate: int = default_frame_rate
+    matching_pattern: str = ""
 
-    return MenuState.MAIN
+    while True:
+        print("\nFile Merger Menu")
+        print(f"1. Select Input Directory: {input_directory_path}")
+        print(f"2. Select Output Directory: {output_directory_path}")
+        print(f"3. Select Output File Name: {output_file_name}")
+        print(f"4. Select Output File Type: {output_file_type}")
+        print(f"5. Select Frame Rate: {frame_rate}")
+        if input_directory_path:
+            print(f"6. Select Matching Pattern: {matching_pattern}")
+
+        merge_ready = all(
+            [
+                input_directory_path,
+                output_directory_path,
+                output_file_name,
+                output_file_type,
+                frame_rate,
+                matching_pattern,
+            ]
+        )
+
+        if merge_ready:
+            output_file_path = os.path.join(
+                output_directory_path,
+                f"{output_file_name}.{output_file_type}",
+            )
+            print()
+            print(f"7. RUN MERGE: Merge Files to: {output_file_path}")
+
+        print("\n[q/quit]. Exit")
+        print("[m/main]. Return to main menu\n")
+
+        choice = read_cli_input_with_validation(
+            prompt="Enter your choice: ",
+            valid_values=["1", "2", "3", "4", "5", "6", "7"],
+            error_message="Invalid choice. Please try again.",
+        )
+        match choice:
+            case "1":  # Select input file directory
+                input_directory_path, matching_pattern = (
+                    __menu_file_merger_input_directory_path()
+                )
+            case "2":  # Select output directory
+                output_directory_path = __menu_file_merger_output_directory_path()
+            case "3":  # Select output file name
+                output_file_name = __menu_file_merger_output_file_name()
+            case "4":  # Select output file type
+                output_file_type = __menu_file_merger_output_file_type()
+            case "5":  # Select frame rate
+                frame_rate = __menu_file_merger_frame_rate(
+                    default_framerate=default_frame_rate
+                )
+            case "6":  # Select matching pattern
+                matching_pattern = __menu_file_merger_get_matching_pattern()
+            case "7":  # Merge files
+                if not merge_ready:
+                    # Failsafe as option does not display but is valid.
+                    print("Please fill in all fields before merging.")
+                    continue
+                __menu_file_merger_merge_files(
+                    input_directory_path=input_directory_path,
+                    output_directory_path=output_directory_path,
+                    output_file_name=output_file_name,
+                    output_file_type=output_file_type,
+                    frame_rate=frame_rate,
+                    matching_pattern=matching_pattern,
+                )
+            case "m" | "main":  # Failsafe: should be handled by exception
+                print("<Warning: Hit unreachable failsafe>")
+                return MenuState.MAIN
+            case "q" | "quit":  # Failsafe: should be handled by exception
+                print("<Warning: Hit unreachable failsafe>")
+                raise exceptions.CLIQuitSignal("User requested to quit.")
+            case _:
+                # Failsafe: Validator should prevent this scenario
+                print(f"Invalid choice: {choice}. Please try again.")
+
+
+def __menu_file_merger_input_directory_path() -> tuple[str, str]:
+    """Get the input directory path from the user, and predict matching pattern.
+
+    If there are no files in the directory, a blank string is returned for both values.
+    If the matching pattern cannot be predicted, a blank string is returned for
+    the pattern.
+
+    Returns:
+        tuple[str, str]: The input directory path and the predicted matching pattern.
+    """
+    dir_str = cli_utils.get_directory(
+        title="Select Input Directory (Containing Image Files)",
+        prompt="Select input directory (containing image files)",
+        default="*",
+    )
+    if not dir_str:
+        return "", ""
+    try:
+        matching_pattern = file_merger.predict_matching_pattern(dir_str)
+        return dir_str, matching_pattern
+    except exceptions.NoFilesException:
+        print("No files found in the selected directory.")
+        return "", ""
+    except exceptions.CannotPredictPatternException:
+        print("Could not predict matching pattern from files in directory.")
+        return dir_str, ""
+
+
+def __menu_file_merger_output_directory_path() -> str:
+    """Get the output directory path from the user.
+
+    Returns:
+        str: The output directory path provided by the user.
+    """
+    return cli_utils.get_directory(
+        title="Select Output Directory",
+        prompt="Select output directory",
+        default="*",
+    )
+
+
+def __menu_file_merger_output_file_name() -> str:
+    """Get the output file name from the user.
+
+    Returns:
+        str: The output file name provided by the user.
+    """
+    return cli_utils.get_file_name(
+        prompt="Enter output file name (without extension): ",
+        strip_extension=True,
+    )
+
+
+def __menu_file_merger_output_file_type() -> str:
+    """Get the output file type from the user.
+
+    Returns:
+        str: The output file type provided by the user.
+    """
+
+    return cli_utils.get_video_output_file_type()
+
+
+def __menu_file_merger_frame_rate(default_framerate: int) -> int:
+    """Get the frame rate from the user.
+
+    Args:
+        default_framerate: int
+            The default frame rate to use if the user does
+            not provide a valid one.
+
+    Returns:
+        int: The frame rate provided by the user.
+    """
+    frame_rate_str = read_cli_input_with_default(
+        prompt=f"Enter frame rate (frames per second) [default: {default_framerate}]: ",
+        default=str(default_framerate),
+    )
+    try:
+        frame_rate = int(frame_rate_str)
+    except ValueError:
+        print(f"Invalid frame rate. Using default of {default_framerate} fps.")
+        frame_rate = default_framerate
+    return frame_rate
+
+
+def __menu_file_merger_get_matching_pattern() -> str:
+    """Get the matching pattern from the user.
+
+    This is required for FFMPEG to know which files to include, and in which order.
+    E.g.  output_%03d.png for files named output_001.png, output_002.png, etc.
+
+    Returns:
+        str: The matching pattern provided by the user.
+    """
+    prompt = (
+        "Enter matching pattern for input files. E.g. output_%03d.png "
+        "for files named output_001.png, output_002.png, etc.: "
+    )
+    pattern = read_cli_input(prompt=prompt, strip=True, lower=False, upper=False)
+    return pattern
+
+
+def __menu_file_merger_merge_files(
+    input_directory_path: str,
+    output_directory_path: str,
+    output_file_name: str,
+    output_file_type: str,
+    frame_rate: int,
+    matching_pattern: str,
+):
+    """Merge the files in the input directory into a video file.
+
+    Args:
+        input_directory_path: str
+            The input directory path containing the image files.
+        output_directory_path: str
+            The output directory path to save the merged video file.
+        output_file_name: str
+            The output file name (without extension).
+        output_file_type: str
+            The output file type (e.g., mp4, mov, avi, mkv).
+        frame_rate: int
+            The frame rate for the output video file.
+        matching_pattern: str
+            The matching pattern to filter input files. Required for
+            FFMPEG to know which files to include, and in which order.
+            E.g. output_%03d.png for files named output_001.png, output_002.png, etc.
+    Returns:
+        None
+    """
+    output_file_path = os.path.join(
+        output_directory_path,
+        f"{output_file_name}.{output_file_type}",
+    )
+    print("Merging files...")
+    try:
+        ffmpeg_wrapper.merge_images_to_video(
+            input_directory=input_directory_path,
+            input_pattern=matching_pattern,
+            output_filepath=output_file_path,
+            frame_rate=frame_rate,
+        )
+    except ffmpeg_wrapper.ffmpeg.Error:
+        # Error would have already been logged to terminal by ffmpeg
+        print("An error occurred during file merging")
+        print("File merging failed. Please fix the issue and try again.")
+        return
+    print(f"File merging completed. See {output_file_path} for results.")
 
 
 # --------------------------------------------------------------------------------------
@@ -287,11 +507,11 @@ def main():
             print("\nExiting, have a good day!")
             # Delay to allow the user to see the message
             sys.exit(0)
-        except CLIQuitSignal:
+        except exceptions.CLIQuitSignal:
             print("\nExiting, have a good day!")
             # Delay to allow the user to see the message
             sys.exit(0)
-        except CLIMainMenuSignal:
+        except exceptions.CLIMainMenuSignal:
             print("\nReturning to main menu...")
             menu_state = MenuState.MAIN
 

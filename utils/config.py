@@ -11,3 +11,6 @@ MAIN_MENU_SIGNALS = ["m", "main"]
 List of signals to return to the main menu (lower case only as it input
 will be lower()'d).
 """
+
+DEFAULT_MERGING_OUTPUT_FRAME_RATE = 24
+"""Default output frame rate for output of video files during merging."""

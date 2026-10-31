@@ -3,6 +3,7 @@
 # Python imports
 
 # Package imports
+import os
 import easygui
 
 # Local imports
@@ -176,3 +177,74 @@ def get_cli_directory_path(
     dir_path = easygui.diropenbox(msg=prompt, title=title, default=default)
 
     return dir_path
+
+
+def get_video_output_file_type() -> str:
+    """Get the output file type from the user.
+
+    Supports common video file types:
+    - mp4
+    - mov
+    - avi
+    - mkv
+
+    Returns:
+        str: The output file type provided by the user.
+    """
+
+    print("\nAvailable output file types:")
+    mapping = {
+        "1": "mp4",
+        "2": "mov",
+        "3": "avi",
+        "4": "mkv",
+    }
+    for key, value in mapping.items():
+        print(f"{key}. {value}")
+    print()
+
+    file_type_int = read_cli_input_with_validation(
+        prompt="Select output file type: ",
+        valid_values=list(mapping.keys()),
+        error_message="Unsupported file type. Please try again.",
+    )
+    file_type = mapping[file_type_int]
+    # if file type starts with ., strip it (failsafe)
+    if file_type and file_type.startswith("."):
+        file_type = file_type[1:]
+    return file_type
+
+
+def get_directory(title: str, prompt: str, default="*") -> str:
+    """Get the output directory path from the user.
+
+    Returns:
+        str: The output directory path provided by the user.
+    """
+    result = get_cli_directory_path(
+        prompt=prompt,
+        title=title,
+        default=default,
+    )
+    if not result:
+        print("No directory selected.")
+        output_directory = ""
+    else:
+        output_directory = result
+    return output_directory
+
+
+def get_file_name(
+    prompt: str = "Enter file name (without extension): ", strip_extension: bool = True
+) -> str:
+    """Get the output file name from the user.
+
+    Args:
+        strip_extension: bool
+            Whether to strip the file extension from the file name.
+            Defaults to True.
+    """
+    file_name = read_cli_input(prompt=prompt)
+    if strip_extension and file_name:
+        file_name, _ = os.path.splitext(file_name)
+    return file_name
