@@ -237,7 +237,7 @@ Using an actual frontend stack and compiling down to static files is definitely 
 The built frontend is committed, so a clone runs without Node/npm. Guards:
 
 1. CI runs `npm ci && npm run build` and fails if `git status --porcelain src/vct/gui/web/` prints anything, which catches changed, deleted and new (untracked) build files.
-2. A prek hook rebuilds when `frontend/` files are staged and runs the same `git status --porcelain` check.
+2. A prek hook rebuilds when `frontend/` files are staged, then fails if the rebuilt output differs from the staged files (`git diff --exit-code src/vct/gui/web/`) or if there are new, unstaged build files (`git ls-files --others --exclude-standard src/vct/gui/web/`). Staged build changes are allowed; CI keeps the stricter `git status --porcelain` check.
 3. Vite builds with unhashed file names and no minification, for stable, readable diffs.
 4. `.gitattributes` marks `src/vct/gui/web/**` as `linguist-generated`.
 5. ESLint and Prettier ignore the output folder.
