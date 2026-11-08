@@ -62,7 +62,7 @@ This project is aimed to be an alternative that students can run locally to easi
 ```
 
 - **Rule:** all behaviour lives in `core`. The GUI and the CLI are thin layers over it. `core` never imports from `cli` or `gui`.
-- **Core is synchronous.** Blocking functions with callbacks; the caller handles threads. The GUI bridge is the only place that creates threads.
+- **Core exposes synchronous APIs.** Blocking functions with callbacks; the caller handles threads. The GUI bridge is the only place that creates threads to run jobs (the runner may still create internal helper threads where needed). The principle is that the core is synchronous, and it's the callers' (e.g. the GUI's) responsibility to handle the async side of things.
 
 
 
@@ -107,7 +107,7 @@ cli.py, utils/, run_cli.*   # legacy menu CLI, removed once GUI/new CLI is final
 3. **Useful error.** Exit code, command and captured stderr tail.
 4. **Hidden Windows console.** `creationflags=subprocess.CREATE_NO_WINDOW` on Windows only; the only platform branch we'd require. Otherwise on Windows, the user will get a terminal popup and likely panic.
 5. **Binary lookup** only through the resolver (5.2), with a clear error when FFmpeg isn't found.
-6. **Explicit overwrite policy.** Every command gets `-y` or `-n` (a required argument of our build helper). FFmpeg always gets its own stdin pipe, so it never prompts.
+6. **Explicit overwrite policy.** Every command gets `-y` or `-n` (a required argument of our build helper). FFmpeg always gets its own stdin pipe, so it never prompts. Outputs always use `-y`, because FFmpeg only ever writes to the job's own temporary file (5.3); whether the final file may be replaced is decided when it is published.
 7. **Progress.** `-progress pipe:1` via `global_args(progress="pipe:1")`; parse the `key=value` blocks.
 8. **Decoding.** Read pipes as bytes, decode with `errors="replace"`.
 9. **Showing a command.** `subprocess.list2cmdline` on Windows, not typed-ffmpeg's POSIX `compile_line()`.
@@ -147,10 +147,11 @@ cli.py, utils/, run_cli.*   # legacy menu CLI, removed once GUI/new CLI is final
 - **Errors:** base `VctError` with `.message` (plain English for students) and optional `.details`.
   - `FFmpegNotFound`
   - `InvalidRequest`: checked before FFmpeg runs (missing input, missing output folder, fps <= 0, trim start >= end, no matching images, missing frames, output path equal to input path, ...).
-  - `OutputExists`: output exists and `overwrite=False`. Core checks before starting; the GUI asks "Overwrite?" and retries with `overwrite=True`. Commands still pass `-n` as a safety net.
+  - `OutputExists`: output exists and `overwrite=False`. Core checks before starting and again just before publishing (see Publishing below); the GUI asks "Overwrite?" and retries with `overwrite=True`.
   - `JobCancelled`: raised, not returned.
   - `FFmpegFailed`: `.returncode`, `.command`, `.stderr_tail` (last ~20 lines).
-- **Partial outputs:** FFmpeg writes `out.mp4.part`, renamed on success, deleted on cancel or failure, so an existing file being overwritten survives a failed job. The container format is given explicitly (`f=`) because FFmpeg can't infer it from `.part`.
+- **Partial outputs:** FFmpeg writes to a unique temporary file that the job creates in the output folder (e.g. `out.mp4.<random>.part` via `tempfile`). It has to be the same folder, so publishing is a rename, not a copy. On success the file is published under the final name; on cancel or failure it is deleted. An existing file being overwritten therefore survives a failed job, and no file the job didn't create is ever overwritten or deleted. The container format is given explicitly (`f=`) because FFmpeg can't infer it from the temporary name.
+- **Publishing:** with `overwrite=False`, check that the final name is still free immediately before the rename, and raise `OutputExists` (deleting the temporary file) if not. On Linux, `os.rename` alone would silently replace the file. This narrows the race from the whole encode to a moment, which is acceptable for a single-user desktop tool. With `overwrite=True`, use `os.replace`, which replaces on both Linux and Windows.
 - **Concurrency:** one job at a time in v1.
 
 
@@ -168,7 +169,8 @@ cli.py, utils/, run_cli.*   # legacy menu CLI, removed once GUI/new CLI is final
   - Frame rate 24 by default; positive; fractional allowed (e.g. 23.976). **Must** be configurable by the user at run-time.
   - Image types: png, jpg/jpeg, tif/tiff, webp, bmp; one type per sequence.
   - Missing frames: core checks the sequence is complete before running and raises `InvalidRequest` naming the gaps (FFmpeg would otherwise stop quietly at the gap).
-  - No audio. PNG transparency becomes black. Mixed image sizes are left to `FFmpegFailed`.
+  - No audio. Mixed image sizes are left to `FFmpegFailed`.
+  - Transparency (e.g. from PNGs) isn't supported in v1; transparent areas may come out in any colour. This is something that will be investigated later.
 
 
 
@@ -234,8 +236,8 @@ Using an actual frontend stack and compiling down to static files is definitely 
 
 The built frontend is committed, so a clone runs without Node/npm. Guards:
 
-1. CI runs `npm ci && npm run build` and fails on `git diff --exit-code src/vct/gui/web/`.
-2. A prek hook rebuilds when `frontend/` files are staged.
+1. CI runs `npm ci && npm run build` and fails if `git status --porcelain src/vct/gui/web/` prints anything, which catches changed, deleted and new (untracked) build files.
+2. A prek hook rebuilds when `frontend/` files are staged and runs the same `git status --porcelain` check.
 3. Vite builds with unhashed file names and no minification, for stable, readable diffs.
 4. `.gitattributes` marks `src/vct/gui/web/**` as `linguist-generated`.
 5. ESLint and Prettier ignore the output folder.
