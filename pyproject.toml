@@ -7,7 +7,6 @@ requires-python = ">=3.13.6"
 dependencies = [
     "easygui>=0.98.3",
     "ffmpeg-python>=0.2.0",
-    "moviepy>=2.1.2",
 ]
 
 [dependency-groups]
