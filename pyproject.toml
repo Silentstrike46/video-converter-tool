@@ -9,13 +9,7 @@ requires-python = ">=3.14"
 dependencies = ["easygui>=0.98.3", "ffmpeg-python>=0.2.0"]
 
 [dependency-groups]
-dev = [
-    "bandit>=1.8.3",
-    "black>=25.1.0",
-    "flake8>=7.1.2",
-    "pytest>=9.2.0",
-    "pytest-cov>=7.1.0",
-]
+dev = ["pytest>=9.2.0", "pytest-cov>=7.1.0", "ruff>=0.17.6"]
 
 [build-system]
 requires = ["uv_build>=0.13.9,<0.14"]
@@ -23,3 +17,19 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 module-name = "vct"
+
+[tool.ruff]
+target-version = "py314"
+# Explicitly exclude the frozen legacy CLI since it will be
+# removed later. Not worth bringing it up to standard before
+# it is deleted.
+# Remove this exclusion when the legacy CLI is deleted (item 8)
+# in the plan.
+extend-exclude = ["utils/", "./cli.py"]
+force-exclude = true
+
+[tool.ruff.lint]
+extend-select = ["S", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"] # pytest relies on assert
