@@ -90,4 +90,3 @@ Releases are tags named `v<major>.<minor>.<patch>` (e.g. `v1.0.0`) on `main`.
 Some helpful editor-specific notes (mostly for my own reference so I don't re-discover the solution to the same issue over and over):
 
 - **basedpyright on Code-OSS**: Use Open VSX `detachhead.basedpyright` extension and `"python.languageServer": "None"`.
-

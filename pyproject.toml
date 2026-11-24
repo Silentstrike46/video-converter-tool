@@ -11,6 +11,7 @@ dependencies = ["easygui>=0.98.3", "ffmpeg-python>=0.2.0"]
 [dependency-groups]
 dev = [
     "basedpyright>=1.40.2",
+    "prek>=0.5.11",
     "pytest>=9.2.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.17.6",
