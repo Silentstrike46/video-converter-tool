@@ -9,7 +9,12 @@ requires-python = ">=3.14"
 dependencies = ["easygui>=0.98.3", "ffmpeg-python>=0.2.0"]
 
 [dependency-groups]
-dev = ["pytest>=9.2.0", "pytest-cov>=7.1.0", "ruff>=0.17.6"]
+dev = [
+    "basedpyright>=1.40.2",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.6",
+]
 
 [build-system]
 requires = ["uv_build>=0.13.9,<0.14"]
@@ -33,3 +38,9 @@ extend-select = ["S", "I", "UP", "B"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"] # pytest relies on assert
+
+[tool.basedpyright]
+# Legacy CLI excluded until it is removed from the project (item 8)
+include = ["src", "tests"]
+pythonVersion = "3.14"
+typeCheckingMode = "recommended"
