@@ -16,7 +16,7 @@ This project is aimed to be an alternative that students can run locally to easi
 
 - **Local only.** Files are large, internet is often slow, and keeping students' private work off third-party sites is the reason the project exists. Nothing is uploaded anywhere; FFmpeg reads files where they are.
 - **Platforms:** Windows and Linux. macOS support is not a focus for initial releases.
-- **Licence:** GPLv3. Will become more of a concern later when we bundle FFmpeg in releases as we need to match their licensing, and different variations of FFmpeg come with different licensing requirements. See "Licensing and Distribution" chapter later.
+- **Licence:** GPLv3 or later (`GPL-3.0-or-later`). Will become more of a concern later when we bundle FFmpeg in releases as we need to match their licensing, and different variations of FFmpeg come with different licensing requirements. See "Licensing and Distribution" chapter later.
 
 
 
@@ -83,7 +83,7 @@ cli.py, utils/, run_cli.*   # legacy menu CLI, removed once GUI/new CLI is final
 ```
 
 - **Names:** project `video-converter-tool`, import package `vct`, command `vct` (via `[project.scripts]`).
-- **Legacy code:** the old menu CLI (`cli.py`, `utils/`, using `ffmpeg-python` and `easygui`) stays working and untouched until the new GUI and CLI cover all three features, so the app is usable at every step of the migration. It is then deleted in one follow-up PR.
+- **Legacy code:** the old menu CLI (`cli.py`, `utils/`, using `ffmpeg-python` and `easygui`) stays working and untouched (apart from removing an unused `moviepy` import and cosmetic whitespace fixes) until the new GUI and CLI cover all three features, so the app is usable at every step of the migration. It is then deleted in one follow-up PR.
 
 
 
@@ -273,10 +273,12 @@ On merge conflicts in the output, rebuild rather than hand-merge. Guard 1 assume
 
 - **Python 3.14** (`requires-python = ">=3.14"`)
 - **uv** for environments and locking.
-- **Ruff** for linting and formatting, with the `S` (security) rules. The subprocess rules will fire in the runner by design. Suppressions should be avoided as far as possible (see [CONTRIBUTING.md](../CONTRIBUTING.md))
+- **Ruff** for linting and formatting: the default rules plus `S` (security), `I` (import sorting), `UP` (pyupgrade) and `B` (bugbear). The subprocess rules will fire in the runner by design. Suppressions should be avoided as far as possible (see [CONTRIBUTING.md](../CONTRIBUTING.md)); the one config-level exception is `S101` (`assert`) in `tests/`, since pytest relies on it. Further rule sets are tracked in [#10](https://github.com/Silentstrike46/video-converter-tool/issues/10).
 - **basedpyright** for type checking.
 - **prek** (`.pre-commit-config.yaml`):
-  - On commit: `ruff check --fix`, `ruff format`, `basedpyright` (local hook via `uv run`), frontend `typecheck`/`lint`/`format` via npm scripts (local hooks, so versions come from `package-lock.json`), the frontend rebuild check (ref section 7.3), basic file checks (whitespace, final newline, YAML/TOML syntax, merge markers, files over ~1 MB), and `uv lock --check`.
+  - Python tools run as local hooks via `uv run --locked`, so their versions come from `uv.lock` and a stale lock fails the hook instead of being silently rewritten.
+  - `default_stages: [pre-commit]`, so hooks without their own stages are not run again on push.
+  - On commit: `ruff check --fix`, `ruff format`, `basedpyright`, frontend `typecheck`/`lint`/`format` via npm scripts (local hooks, so versions come from `package-lock.json`), the frontend rebuild check (ref section 7.3), basic file checks (whitespace, final newline, YAML/TOML syntax, merge markers, files over ~1 MB), and `uv lock --check`.
   - On push: `pytest`, until CI covers it.
 - **Check scope during the migration:** Ruff, basedpyright and their hooks cover only `src/` and `tests/`, with a config comment explaining why. The legacy code is frozen and scheduled for deletion; the limiter is removed in the same PR, after which the whole project is checked.
 - **Line endings:** `.gitattributes` with `* text=auto eol=lf`.
@@ -334,7 +336,7 @@ GitHub flow with squash merges and `v*` release tags. Branch naming, commit and 
 
 NOTE: Up for discussion and can change as needed. This is the first version proposed.
 
-- **Project licence:** GPLv3 (add the licence field to `pyproject.toml`).
+- **Project licence:** GPLv3 or later (`GPL-3.0-or-later`, set in `pyproject.toml`).
 - **v1 redistributes nothing of FFmpeg's.** When bundling is picked up:
   - **Build:** BtbN `gpl` variant, because `libx264` is GPL-only (the `lgpl` variant lacks it). `nonfree` is not redistributable. Static vs shared decided by real download sizes.
   - **Source obligation:** "corresponding source" covers FFmpeg and every library statically linked into the build. Options:
@@ -354,7 +356,6 @@ NOTE: Up for discussion and can change as needed. This is the first version prop
 - **Windows is untested.** WebView2 loading the Vite build, `window.state` updates, the native dialog, hidden consoles. Will need to be tested on a real Windows machine once a MVP of the GUI is done.
 - **pywebview threading:** `js_api` calls are believed to run off the GUI thread; verify.
 - **`window.state`** was read in source (pywebview 6.2.1), not yet run.
-- **Legacy CLI on Python 3.14:** `ffmpeg-python` 0.2.0 and `easygui` on 3.14 are unverified, but can be tested. Worst case I'd argue we drop the legacy CLI as opposed to not running Python 3.14, but hopefully we can do both.
 - **FFmpeg in CI:** how the runners get FFmpeg 9 without us redistributing it (e.g. download BtbN's month-end build directly with a pinned SHA-256, rather than re-hosting it), and whether to add a job on Ubuntu's packaged (older) FFmpeg to exercise the version warning.
 - **Custom FFmpeg path:** whether v1's Settings lets the user pick `ffmpeg.exe` directly, so Windows users can avoid editing PATH.
 - **Frontend tests (layer 6):** whether to add a test runner (e.g. Vitest) and for what.
@@ -369,7 +370,7 @@ NOTE: Up for discussion and can change as needed. This is the first version prop
 One issue and one squash-merged PR per item, vertical slices after the scaffolding.
 
 0. **Design doc** (this document).
-1. **Tooling chore:** Python 3.14; empty `src/vct/` alongside the untouched legacy CLI; drop moviepy, pyqt6, pyside6, black, flake8, bandit (and the unused `moviepy` import); keep `ffmpeg-python` and `easygui`; add the new dependencies and tools; prek; delete the PySide6 files; remove the LFS rules and `tox.ini`; licence field; `eol=lf`. Success check: the legacy CLI still runs.
+1. **Tooling chore:** Python 3.14; empty `src/vct/` alongside the untouched legacy CLI; drop moviepy, pyqt6, pyside6, black, flake8, bandit (and the unused `moviepy` import); keep `ffmpeg-python` and `easygui`; add the new tools (no runtime dependencies yet: each is added in the item that first uses it, i.e. `typed-ffmpeg`, `platformdirs` and `tomli-w` in item 3, `pywebview` and `pygobject` in item 4, and the `vct` script entry with the first subcommand in item 5); prek; delete the PySide6 files; remove the LFS rules and `tox.ini`; licence field; `eol=lf`. Success check: the legacy CLI still runs.
 2. **CI** on Ubuntu and Windows.
 3. **Core foundation:** resolver and version check, runner, progress parsing, errors, settings.
 4. **GUI scaffold:** `frontend/` and its tooling and CI job; bridge, sidebar, `window.state`, Settings screen; first Windows check.

@@ -1,6 +1,5 @@
 # util functions for interacting with ffmpeg binaries
 import ffmpeg
-import moviepy
 from utils import config
 
 
